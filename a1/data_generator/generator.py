@@ -1,6 +1,7 @@
 import random
 import string
 import pprint
+import itertools
 
 with open('/usr/share/dict/words') as fin:
     WORD_LIST = map(lambda x: x.strip().translate(None, string.punctuation), list(fin))
@@ -25,7 +26,9 @@ def generate_random_course(number=1000):
     return result
 
 def generate_random_teacher(number=1000):
-    ''' Returns a list of teachers. '''
+    ''' 
+    Returns a list of teachers. 
+    '''
     name_set = set()
     while len(name_set) < number:
         first_name = random.choice(['Jethalal', 'Mary', 'Ram', 'Muhammed', 'Hirohito', 'John', 'Vladimir', 'Nadezhda'])
@@ -37,7 +40,9 @@ def generate_random_teacher(number=1000):
     return people
 
 def generate_random_student(number=1000):
-    ''' Returns a list of students '''
+    ''' 
+    Returns a list of students 
+    '''
     name_set = set()
     while len(name_set) < number:
         first_name = random.choice(['Tipendra', 'Pankaj', 'Sonalika', 'Gurucharan', 'Gulab', 'Natwarlal', 'Bageshwar', 'Uvuvwevwevwe'])
@@ -49,7 +54,9 @@ def generate_random_student(number=1000):
     return people
 
 def gen_queries(entity_list=[], table_name=''):
-    '''Returns a list of SQL queries from a list of input JSON values'''
+    '''
+    Returns a list of SQL queries from a list of input JSON values
+    '''
     table_to_col = {
         'teacher': 'teacher_id',
         'course': 'course_id',
@@ -61,18 +68,42 @@ def gen_queries(entity_list=[], table_name=''):
 
     return query_list
 
+def gen_relation_queries(teacher_list, student_list, course_list):
+    '''
+    Return the queries for the relations registers, teaches and weak entity set section
+    '''
+    reg_list = itertools.product(student_list, course_list)
+    teach_list = itertools.product(teacher_list, course_list)
+    section_list = itertools.product(['A', 'B', 'C', 'D'], course_list)
+    query_list = []
+
+    for (student, course) in reg_list:
+        query_list.append('''INSERT INTO {} VALUES ('{}','{}');'''.format('registers', student['student_id'], course['course_id']))        
+
+    for (teacher, course) in teach_list:
+        query_list.append('''INSERT INTO {} VALUES ('{}','{}');'''.format('teaches', course['course_id'], teacher['teacher_id'])) 
+
+    for (section_num, course) in section_list:
+        query_list.append('''INSERT INTO {} VALUES ('{}','{}');'''.format('section', section_num, course['course_id']))        
+
+    return query_list
+
 if __name__ == '__main__':
-    # pprint.pprint(generate_random_course())
-    # pprint.pprint(generate_random_teacher())
-    # pprint.pprint(generate_random_student())
     table_list = {
         'student' : generate_random_student, 
         'teacher' : generate_random_teacher, 
         'course' : generate_random_course
     }
 
-    for i in table_list:
-        lst = gen_queries(table_list[i](), i)[:10]
-        for j in lst:
-            print( j )
+    student_list = table_list['student']()[:10]
+    teacher_list = table_list['teacher']()[:10]
+    course_list = table_list['course']()[:10]
+
+    query_list = gen_queries(student_list, 'student')
+    query_list += gen_queries(teacher_list, 'teacher')
+    query_list += gen_queries(course_list, 'course')
+    query_list += gen_relation_queries(teacher_list, student_list, course_list)
+
+    for j in query_list:
+        print( j )
 
