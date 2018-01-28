@@ -1,0 +1,12 @@
+DELETE FROM registers;
+DELETE FROM section;
+DELETE FROM teaches;
+DELETE FROM teacher;
+DELETE FROM student;
+DELETE FROM course;
+DROP TABLE registers;
+DROP TABLE section;
+DROP TABLE teaches;
+DROP TABLE teacher;
+DROP TABLE student;
+DROP TABLE course;
