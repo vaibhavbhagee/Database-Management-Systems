@@ -2,6 +2,12 @@ import random
 import string
 import pprint
 import itertools
+import sys
+
+bulk = False
+
+if sys.argv[2] == "true":
+    bulk = True
 
 with open('/usr/share/dict/words') as fin:
     WORD_LIST = map(lambda x: x.strip().translate(None, string.punctuation), list(fin))
@@ -68,6 +74,27 @@ def gen_queries(entity_list=[], table_name=''):
 
     return query_list
 
+def gen_queries_single(entity_list=[], table_name=''):
+    '''
+    Returns a list of SQL queries from a list of input JSON values
+    '''
+    table_to_col = {
+        'teacher': 'teacher_id',
+        'course': 'course_id',
+        'student': 'student_id'
+    }
+    query_list = []
+    initial = '''INSERT INTO {} VALUES'''.format(table_name)
+    for entity in entity_list:
+        initial += ''' ('{}','{}'),'''.format(entity[table_to_col[table_name]], entity['name'])
+
+    if bulk:
+        query_list.append('''COPY ({} RETURNING *) TO STDOUT;'''.format(initial[:-1]))
+    else:
+        query_list.append('''{};'''.format(initial[:-1]))
+
+    return query_list
+
 def gen_relation_queries(teacher_list, student_list, course_list):
     '''
     Return the queries for the relations registers, teaches and weak entity set section
@@ -88,21 +115,67 @@ def gen_relation_queries(teacher_list, student_list, course_list):
 
     return query_list
 
+def gen_relation_queries_single(teacher_list, student_list, course_list):
+    '''
+    Return the queries for the relations registers, teaches and weak entity set section
+    '''
+    reg_list = itertools.product(student_list, course_list)
+    teach_list = itertools.product(teacher_list, course_list)
+    section_list = itertools.product(['A', 'B', 'C', 'D'], course_list)
+    query_list = []
+
+    reg_initial = '''INSERT INTO {} VALUES'''.format('registers')
+
+    for (student, course) in reg_list:
+        reg_initial += ''' ('{}','{}'),'''.format(student['student_id'], course['course_id'])
+
+    if bulk:
+        query_list.append('''COPY ({} RETURNING *) TO STDOUT;'''.format(reg_initial[:-1]))
+    else:
+        query_list.append('''{};'''.format(reg_initial[:-1]))
+
+    teach_initial = '''INSERT INTO {} VALUES'''.format('teaches')
+
+    for (teacher, course) in teach_list:
+        teach_initial += ''' ('{}','{}'),'''.format(course['course_id'], teacher['teacher_id'])
+
+    if bulk:
+        query_list.append('''COPY ({} RETURNING *) TO STDOUT;'''.format(teach_initial[:-1]))
+    else:
+        query_list.append('''{};'''.format(teach_initial[:-1]))
+
+    section_initial = '''INSERT INTO {} VALUES'''.format('section')
+
+    for (section_num, course) in section_list:
+        section_initial += ''' ('{}','{}'),'''.format(section_num, course['course_id'])
+
+    if bulk:
+        query_list.append('''COPY ({} RETURNING *) TO STDOUT;'''.format(section_initial[:-1]))
+    else:
+        query_list.append('''{};'''.format(section_initial[:-1]))
+
+    return query_list
+
 if __name__ == '__main__':
+
+    num_records = int(sys.argv[1])
+
     table_list = {
         'student' : generate_random_student, 
         'teacher' : generate_random_teacher, 
         'course' : generate_random_course
     }
 
-    student_list = table_list['student']()[:10]
-    teacher_list = table_list['teacher']()[:10]
-    course_list = table_list['course']()[:10]
+    student_list = table_list['student']()[:num_records]
+    teacher_list = table_list['teacher']()[:num_records]
+    course_list = table_list['course']()[:num_records]
 
-    query_list = gen_queries(student_list, 'student')
-    query_list += gen_queries(teacher_list, 'teacher')
-    query_list += gen_queries(course_list, 'course')
-    query_list += gen_relation_queries(teacher_list, student_list, course_list)
+    query_list = gen_queries_single(student_list, 'student')
+    query_list += gen_queries_single(teacher_list, 'teacher')
+    query_list += gen_queries_single(course_list, 'course')
+    query_list += gen_relation_queries_single(teacher_list, student_list, course_list)
+
+    print('\\timing')
 
     for j in query_list:
         print( j )

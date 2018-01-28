@@ -1,3 +1,4 @@
+\timing
 INSERT INTO student VALUES ('S0','Pankaj Corvuss Kumar');
 INSERT INTO student VALUES ('S1','Natwarlal expunging Bhide');
 INSERT INTO student VALUES ('S2','Sonalika prestigious Sodhi');
