@@ -278,52 +278,52 @@ INSERT INTO section VALUES ('D','THC721');
 -------------------------------------------------------------------------------------
 
 -- Causes no change
--- DELETE FROM section;
--- DELETE FROM registers;
--- DELETE FROM teaches;
+DELETE FROM section;
+DELETE FROM registers;
+DELETE FROM teaches;
 
 -------------------------------------------------------------------------------------
 
 -- Checks Referential integrity (Should empty all the tables after execution)
--- DELETE FROM course;
--- DELETE FROM teacher;
--- DELETE FROM student;
+DELETE FROM course;
+DELETE FROM teacher;
+DELETE FROM student;
 
 ----------------------------------------------------------------------------------------
 -- FOLLOWING TEST CASES CHECK FOR VIOLATION OF CONSTRAINTS AND ARE BOUND TO THROW ERRORS
 ----------------------------------------------------------------------------------------
 
 -- Checks for section (1: Checks for duplicates, 2: Checks for section not in (A,B,C,D), 3: Checks for foreign key constraint for course)
--- INSERT INTO section VALUES ('A','IRY743');
--- INSERT INTO section VALUES ('E','IRY743');
--- INSERT INTO section VALUES ('A','AAAAAA');
+INSERT INTO section VALUES ('A','IRY743');
+INSERT INTO section VALUES ('E','IRY743');
+INSERT INTO section VALUES ('A','AAAAAA');
 
 -------------------------------------------------------------------------------------
 
 -- Checks for teaches (1: Checks for duplicates, 2: Checks for foreign key constraint for teacher, 3: Checks for foreign key constraint for course)
--- INSERT INTO teaches VALUES ('URG062','T9');
--- INSERT INTO teaches VALUES ('URG062','T10');
--- INSERT INTO teaches VALUES ('AAAAAA','T9');
+INSERT INTO teaches VALUES ('URG062','T9');
+INSERT INTO teaches VALUES ('URG062','T10');
+INSERT INTO teaches VALUES ('AAAAAA','T9');
 
 -------------------------------------------------------------------------------------
 
 -- Checks for registers (1: Checks for duplicates, 2: Checks for foreign key constraint for teacher, 3: Checks for foreign key constraint for student)
--- INSERT INTO registers VALUES ('S8','QCM751');
--- INSERT INTO registers VALUES ('S8','AAAAAA');
--- INSERT INTO registers VALUES ('S10','QCM751');
+INSERT INTO registers VALUES ('S8','QCM751');
+INSERT INTO registers VALUES ('S8','AAAAAA');
+INSERT INTO registers VALUES ('S10','QCM751');
 
 -------------------------------------------------------------------------------------
 
 -- Checks for DELETE statements (checks foreign key constraint for a single element)
--- DELETE FROM course WHERE course_id = 'IRY743';
+DELETE FROM course WHERE course_id = 'IRY743';
 
--- DELETE FROM teacher WHERE teacher_id = 'T9';
--- INSERT INTO teaches VALUES ('IRY743','T9');
+DELETE FROM teacher WHERE teacher_id = 'T9';
+INSERT INTO teaches VALUES ('IRY743','T9');
 
--- DELETE FROM student WHERE student_id = 'S8';
--- INSERT INTO registers VALUES ('S8','IRY743');
+DELETE FROM student WHERE student_id = 'S8';
+INSERT INTO registers VALUES ('S8','IRY743');
 
 -------------------------------------------------------------------------------------
 
 -- Checks for UPDATE statements (checks for update cascade)
--- UPDATE teacher SET teacher_id = 'T10' WHERE teacher_id = 'T9';
+UPDATE teacher SET teacher_id = 'T10' WHERE teacher_id = 'T9';
