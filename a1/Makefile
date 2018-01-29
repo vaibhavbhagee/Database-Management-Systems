@@ -1,27 +1,42 @@
+db = sudo -u postgres psql 
+db_name = test
+cur_dir = $(shell pwd)
+data_gen = $(cur_dir)/data_generator
+sql_scripts = $(cur_dir)/sql_files
+num_entries = 707
+bul_load = false
+tmp_dir = /tmp
+
 create_table:
-	sudo -u postgres psql -d test -a -f design.sql
+	$(db) -d $(db_name) -a -f $(sql_scripts)/design.sql
 
 big:
-	python data_generator/generator.py 707 false > big_queries.sql
-	sudo -u postgres psql -d test -a -f big_queries.sql
+	python $(data_gen)/generator.py $(num_entries) $(bul_load) > $(sql_scripts)/big_queries.sql
+	$(db) -d $(db_name) -a -f $(sql_scripts)/big_queries.sql
 
-big_bulk:
-	sudo -u postgres psql -d test -a -f copy_to.sql
+bulk_load:
+	$(db) -d $(db_name) -a -f $(sql_scripts)/copy_to.sql
 	make delete_table
 	make create_table
-	sudo -u postgres psql -d test -a -f copy_from.sql
+	$(db) -d $(db_name) -a -f $(sql_scripts)/copy_from.sql
 
 insert:
-	sudo -u postgres psql -d test -a -f queries.sql
+	$(db) -d $(db_name) -a -f $(sql_scripts)/queries.sql
 
 delete_table:
-	sudo -u postgres psql -d test -a -f delete_tables.sql	
+	$(db) -d $(db_name) -a -f $(sql_scripts)/delete_tables.sql	
 
 view:
-	sudo -u postgres psql -d test -a -f view_table_details.sql
+	$(db) -d $(db_name) -a -f $(sql_scripts)/view_table_details.sql
 
 test:
-	sudo -u postgres psql -d test -a -f test_queries.sql
+	$(db) -d $(db_name) -a -f $(sql_scripts)/test_queries.sql
 
 clean:
-	rm -rf big_queries.sql
+	rm -rf $(sql_scripts)/big_queries.sql
+	sudo rm -rf $(tmp_dir)/course.csv
+	sudo rm -rf $(tmp_dir)/teacher.csv
+	sudo rm -rf $(tmp_dir)/student.csv
+	sudo rm -rf $(tmp_dir)/teaches.csv
+	sudo rm -rf $(tmp_dir)/registers.csv
+	sudo rm -rf $(tmp_dir)/section.csv
