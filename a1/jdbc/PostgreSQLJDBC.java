@@ -15,60 +15,52 @@ public class PostgreSQLJDBC {
          System.out.println("Opened database successfully");
 
          stmt = c.createStatement();
-         String sql = "CREATE TABLE student " +
+         String sql = "DELETE FROM registers;" +
+                     "DELETE FROM section;" +
+                     "DELETE FROM teaches;" +
+                     "DELETE FROM teacher;" +
+                     "DELETE FROM student;" +
+                     "DELETE FROM course;" +
+                     "DROP TABLE registers;" +
+                     "DROP TABLE section;" +
+                     "DROP TABLE teaches;" +
+                     "DROP TABLE teacher;" +
+                     "DROP TABLE student;" +
+                     "DROP TABLE course;";
+         stmt.executeUpdate(sql);
+
+         sql = "CREATE TABLE student " +
             "(student_id   varchar(50) PRIMARY KEY," +
             " name         varchar(50))";
          stmt.executeUpdate(sql);
 
-         stmt = c.createStatement();
          sql = "CREATE TABLE course " +
             "(course_id    varchar(50) PRIMARY KEY," +
             " name         varchar(50))";
          stmt.executeUpdate(sql);
 
-         stmt = c.createStatement();
          sql = "CREATE TABLE teacher " +
             "(teacher_id   varchar(50) PRIMARY KEY," +
             " name         varchar(50))";
          stmt.executeUpdate(sql);
 
-         stmt = c.createStatement();
          sql = "CREATE TABLE registers " +
             "(student_id varchar(50) REFERENCES student(student_id) ON DELETE CASCADE," +
             " course_id varchar(50) REFERENCES course(course_id) ON DELETE CASCADE," +
             " PRIMARY KEY (student_id, course_id))";
          stmt.executeUpdate(sql);
 
-         stmt = c.createStatement();
          sql = "CREATE TABLE teaches " +
             "(course_id varchar(50) REFERENCES course(course_id) ON DELETE CASCADE," +
             " teacher_id varchar(50) REFERENCES teacher(teacher_id) ON DELETE CASCADE," +
             " PRIMARY KEY (teacher_id, course_id))";
          stmt.executeUpdate(sql);
 
-         stmt = c.createStatement();
          sql = "CREATE TABLE section " +
             "(section_number varchar(1) CHECK (section_number IN ('A','B','C','D'))," +
             " course_id varchar(50) REFERENCES course(course_id) ON DELETE CASCADE," +
             " PRIMARY KEY (course_id, section_number))";
          stmt.executeUpdate(sql);
-         
-         // stmt = c.createStatement();
-         // sql = "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "
-         //    + "VALUES (1, 'Paul', 32, 'California', 20000.00 );";
-         // stmt.executeUpdate(sql);
-
-         // sql = "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "
-         //    + "VALUES (2, 'Allen', 25, 'Texas', 15000.00 );";
-         // stmt.executeUpdate(sql);
-
-         // sql = "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "
-         //    + "VALUES (3, 'Teddy', 23, 'Norway', 20000.00 );";
-         // stmt.executeUpdate(sql);
-
-         // sql = "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "
-         //    + "VALUES (4, 'Mark', 25, 'Rich-Mond ', 65000.00 );";
-         // stmt.executeUpdate(sql);
 
          stmt.close();
          c.commit();
