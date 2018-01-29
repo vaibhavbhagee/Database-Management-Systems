@@ -1,5 +1,7 @@
 db = sudo -u postgres psql 
 db_name = test
+db_user = postgres
+db_pass = postgres
 cur_dir = $(shell pwd)
 data_gen = $(cur_dir)/data_generator
 sql_scripts = $(cur_dir)/sql_files
@@ -37,7 +39,7 @@ jdbc_tgt:
 	javac $(jdbc_dir)/PostgreSQLJDBC.java
 	make delete_table
 	cd $(jdbc_dir)/; \
-	java -classpath postgresql-42.2.1.jar:. PostgreSQLJDBC; \
+	java -classpath postgresql-42.2.1.jar:. PostgreSQLJDBC $(db_name) $(db_user) $(db_pass); \
 	cd $(cur_dir)/
 
 clean:

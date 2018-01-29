@@ -31,3 +31,5 @@
 	* This should be done after the tables have been created in the database.  
 
 1. **NOTE:** The commands should be run from the directory containing the make file
+
+1. **NOTE:** All the parameters are set in the make file and can be edited as per need.

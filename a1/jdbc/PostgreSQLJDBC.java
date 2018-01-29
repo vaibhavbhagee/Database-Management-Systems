@@ -10,8 +10,8 @@ public class PostgreSQLJDBC {
       try {
          Class.forName("org.postgresql.Driver");
          c = DriverManager
-            .getConnection("jdbc:postgresql://localhost:5432/test",
-            "postgres", "postgres");
+            .getConnection("jdbc:postgresql://localhost:5432/"+args[0],
+            args[1], args[2]);
          c.setAutoCommit(false);
          System.out.println("Opened database successfully");
 
