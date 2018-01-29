@@ -326,4 +326,6 @@ INSERT INTO section VALUES ('D','THC721');
 -------------------------------------------------------------------------------------
 
 -- Checks for UPDATE statements (checks for update cascade)
--- UPDATE teacher SET teacher_id = 'T10' WHERE teacher_id = 'T9';
+UPDATE teacher SET teacher_id = 'T10' WHERE teacher_id = 'T9';
+UPDATE course SET course_id = 'AAA000' WHERE course_id = 'QCM751';
+UPDATE student SET student_id = 'T10' WHERE student_id = 'T9';
