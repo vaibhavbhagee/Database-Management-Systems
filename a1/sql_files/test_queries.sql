@@ -33,5 +33,4 @@
 -- INSERT INTO registers VALUES ('S8','IRY743');
 
 -- Checks for UPDATE statements
-UPDATE teacher SET teacher_id = 'T10' WHERE teacher_id = 'T9';
--- TODO: Check for update cascade
+-- UPDATE teacher SET teacher_id = 'T10' WHERE teacher_id = 'T9';
