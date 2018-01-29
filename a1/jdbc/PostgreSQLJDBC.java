@@ -1,6 +1,7 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
+import java.io.*;
 
 public class PostgreSQLJDBC {
    public static void main(String args[]) {
@@ -9,27 +10,14 @@ public class PostgreSQLJDBC {
       try {
          Class.forName("org.postgresql.Driver");
          c = DriverManager
-            .getConnection("jdbc:postgresql://localhost:5432/testdb",
+            .getConnection("jdbc:postgresql://localhost:5432/test",
             "postgres", "postgres");
          c.setAutoCommit(false);
          System.out.println("Opened database successfully");
 
          stmt = c.createStatement();
-         String sql = "DELETE FROM registers;" +
-                     "DELETE FROM section;" +
-                     "DELETE FROM teaches;" +
-                     "DELETE FROM teacher;" +
-                     "DELETE FROM student;" +
-                     "DELETE FROM course;" +
-                     "DROP TABLE registers;" +
-                     "DROP TABLE section;" +
-                     "DROP TABLE teaches;" +
-                     "DROP TABLE teacher;" +
-                     "DROP TABLE student;" +
-                     "DROP TABLE course;";
-         stmt.executeUpdate(sql);
-
-         sql = "CREATE TABLE student " +
+            
+         String sql = "CREATE TABLE student " +
             "(student_id   varchar(50) PRIMARY KEY," +
             " name         varchar(50))";
          stmt.executeUpdate(sql);
@@ -62,11 +50,31 @@ public class PostgreSQLJDBC {
             " PRIMARY KEY (course_id, section_number))";
          stmt.executeUpdate(sql);
 
+         BufferedReader in = null;
+         try
+         {
+            in = new BufferedReader(new FileReader("../sql_files/big_queries.sql"));
+            sql = in.readLine();
+            int line_number = 1;
+            // Each line contains the insert command for a table
+            while ((sql = in.readLine()) != null){
+               long startTime = System.currentTimeMillis();
+               stmt.executeUpdate(sql);
+               long endTime = System.currentTimeMillis();
+               System.out.println(line_number + " : " + (endTime - startTime) + " ms");
+               line_number++;
+            }
+         }
+         finally
+         {
+            if (in != null)
+               in.close();
+         }
          stmt.close();
          c.commit();
-         c.close();
+         c.close();   
       } catch (Exception e) {
-         System.err.println( e.getClass().getName()+": "+ e.getMessage() );
+         System.err.println(e.getClass().getName()+": "+ e.getMessage());
          System.exit(0);
       }
       System.out.println("Records created successfully");
