@@ -6,6 +6,7 @@ sql_scripts = $(cur_dir)/sql_files
 num_entries = 707
 bul_load = false
 tmp_dir = /tmp
+jdbc_dir = $(cur_dir)/jdbc
 
 create_table:
 	$(db) -d $(db_name) -a -f $(sql_scripts)/design.sql
@@ -32,8 +33,16 @@ view:
 test:
 	$(db) -d $(db_name) -a -f $(sql_scripts)/test_queries.sql
 
+jdbc_tgt:
+	javac $(jdbc_dir)/PostgreSQLJDBC.java
+	make delete_table
+	cd $(jdbc_dir)/; \
+	java -classpath postgresql-42.2.1.jar:. PostgreSQLJDBC; \
+	cd $(cur_dir)/
+
 clean:
 	rm -rf $(sql_scripts)/big_queries.sql
+	rm -rf $(jdbc_dir)/*.class
 	sudo rm -rf $(tmp_dir)/course.csv
 	sudo rm -rf $(tmp_dir)/teacher.csv
 	sudo rm -rf $(tmp_dir)/student.csv
