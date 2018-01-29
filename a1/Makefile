@@ -2,12 +2,14 @@ create_table:
 	sudo -u postgres psql -d test -a -f design.sql
 
 big:
-	python data_generator/generator.py 10 false > big_queries.sql
+	python data_generator/generator.py 707 false > big_queries.sql
 	sudo -u postgres psql -d test -a -f big_queries.sql
 
 big_bulk:
-	python data_generator/generator.py 10 true > big_queries.sql
-	sudo -u postgres psql -d test -a -f big_queries.sql
+	sudo -u postgres psql -d test -a -f copy_to.sql
+	make delete_table
+	make create_table
+	sudo -u postgres psql -d test -a -f copy_from.sql
 
 insert:
 	sudo -u postgres psql -d test -a -f queries.sql
