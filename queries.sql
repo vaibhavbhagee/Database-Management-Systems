@@ -53,7 +53,7 @@ ORDER BY player_name;
 
 -- Q8
 
-SELECT match_id, sum(runs_scored) as total_runs
+SELECT match_id, sum(runs_scored) AS total_runs
 FROM batsman_scored
 GROUP BY match_id
 ORDER BY match_id;
@@ -64,30 +64,30 @@ SELECT t1.match_id AS match_id, maximum_runs, player_name
 FROM
 	(SELECT match_id, MAX(total_runs) AS maximum_runs
 	FROM
-		(SELECT match_id, over_id, innings_no, SUM(runs_scored) as total_runs
+		(SELECT match_id, over_id, innings_no, SUM(runs_scored) AS total_runs
 		FROM batsman_scored
 		GROUP BY match_id, over_id, innings_no) AS t
 	GROUP BY match_id) AS t1, 
-	(SELECT match_id, over_id, innings_no, bowler, SUM(runs_scored) as total_runs
+	(SELECT match_id, over_id, innings_no, bowler, SUM(runs_scored) AS total_runs
 		FROM batsman_scored NATURAL JOIN ball_by_ball
 		GROUP BY match_id, over_id, innings_no, bowler) AS t,
 	player
 WHERE t1.match_id = t.match_id AND t1.maximum_runs = t.total_runs AND t.bowler = player.player_id
 ORDER BY t1.match_id, over_id;
 
--- Q10
+-- Q10 <ALSO consider players who have been run out 0 times>
 
 SELECT player_name, number
-FROM player, (SELECT player_out, count(ball_id) as number
+FROM player, (SELECT player_out, count(ball_id) AS number
 				FROM wicket_taken
 				GROUP BY player_out, kind_out
-				HAVING kind_out = 'run out') as runouts
+				HAVING kind_out = 'run out') AS runouts
 WHERE player.player_id = runouts.player_out
 ORDER BY number DESC, player_name;
 
 -- Q11
 
-SELECT kind_out as out_type, count(ball_id) as number
+SELECT kind_out AS out_type, count(ball_id) AS number
 FROM wicket_taken
 GROUP BY kind_out
 ORDER BY count(ball_id) DESC, kind_out;
@@ -98,6 +98,100 @@ SELECT name, count(man_of_the_match) AS number
 FROM
 	(SELECT man_of_the_match, match.match_id, team.team_id, name
 	FROM match, player_match, team
-	WHERE match.match_id = player_match.match_id AND man_of_the_match = player_id AND player_match.team_id = team.team_id) as t
+	WHERE match.match_id = player_match.match_id AND man_of_the_match = player_id AND player_match.team_id = team.team_id) AS t
 GROUP BY name
 ORDER BY name;
+
+-- Q13
+
+SELECT venue
+FROM extra_runs, match
+WHERE extra_runs.extra_type = 'wides' AND extra_runs.match_id = match.match_id
+GROUP BY venue
+ORDER BY count(extra_type) DESC, venue
+LIMIT 1;
+
+-- Q14 <ordering is DESC or ASC>
+
+SELECT venue
+FROM match
+WHERE ((match_winner = toss_winner) AND (toss_decision = 'field')) OR ((match_winner <> toss_winner) AND (toss_decision = 'bat'))
+GROUP BY venue
+ORDER BY count(*), venue;
+
+-- Q15 <CHECK the output>
+
+SELECT player_name
+FROM
+	(SELECT bowler, round(1.0*runs_given/num_wickets,3) AS average
+	FROM
+		(SELECT bowler, sum(runs_scored) AS runs_given
+		FROM ball_by_ball NATURAL JOIN batsman_scored
+		GROUP BY bowler) AS t1
+		NATURAL JOIN
+		(SELECT bowler, count(player_out) AS num_wickets
+		FROM ball_by_ball NATURAL JOIN wicket_taken
+		GROUP by bowler) AS t2) AS t3,
+	player
+WHERE player.player_id = t3.bowler 
+ORDER BY average
+LIMIT 1;
+
+-- Q16 ???????????????????????? order by team name?
+
+SELECT player_name, name
+FROM match, player_match, player, team
+WHERE 
+	role = 'CaptainKeeper' 
+	AND match.match_id = player_match.match_id 
+	AND match_winner = player_match.team_id 
+	AND player_match.player_id = player.player_id 
+	AND player_match.team_id = team.team_id
+GROUP BY player_name, name
+ORDER BY player_name;
+
+-- Q17 <runs scored means total runs or runs in every match>
+
+SELECT player_name, runs_scored
+FROM
+	(
+	(SELECT DISTINCT striker
+	FROM ball_by_ball NATURAL JOIN batsman_scored
+	GROUP BY match_id, striker
+	HAVING sum(runs_scored) >= 50) AS t1
+	NATURAL JOIN
+	(SELECT striker, sum(runs_scored) AS runs_scored
+	FROM ball_by_ball NATURAL JOIN batsman_scored
+	GROUP BY striker) AS t2) AS t3, 
+	player
+WHERE striker = player_id
+ORDER BY runs_scored DESC, player_name;
+
+-- Q18
+
+SELECT player_name
+FROM
+	(SELECT striker, match_id
+	FROM ball_by_ball NATURAL JOIN batsman_scored
+	GROUP BY match_id, striker
+	HAVING sum(runs_scored) >= 100) AS t1,
+	player_match, match, player
+WHERE 
+	t1.match_id = player_match.match_id
+	AND match.match_id = t1.match_id
+	AND player_match.player_id = striker
+	AND striker = player.player_id
+	AND player_match.team_id <> match.match_winner
+ORDER BY player_name;
+
+-- Q19
+
+SELECT match_id, venue
+FROM match, team
+WHERE team.name = 'Kolkata Knight Riders'
+AND (
+	(team_id = team_1 AND team_2 = match_winner)
+	OR
+	(team_id = team_2 AND team_1 = match_winner)
+	)
+ORDER BY match_id;
