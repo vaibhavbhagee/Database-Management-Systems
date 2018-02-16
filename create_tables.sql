@@ -1,29 +1,29 @@
 CREATE TABLE player(
 	player_id int PRIMARY KEY,
-	player_name varchar(100),
+	player_name text,
 	dob	date,
-	batting_hand varchar(100),
-	bowling_skill varchar(100),
-	country_name varchar(100)
+	batting_hand text,
+	bowling_skill text,
+	country_name text
 );
 
 CREATE TABLE team(
 	team_id int PRIMARY KEY,
-	name varchar(100)
+	name text
 );
 
 CREATE TABLE match(
 	match_id int PRIMARY KEY,
 	team_1 int,
 	team_2 int,
-	match date,
+	match_date date,
 	season_id int CHECK (season_id BETWEEN 1 AND 9),
-	venue varchar(100),
+	venue text,
 	toss_winner int,
-	toss_decision varchar(100),
-	win_type varchar(100),
+	toss_decision text,
+	win_type text,
 	win_margin int,
-	outcome_type varchar(100),
+	outcome_type text,
 	match_winner int,
 	man_of_the_match int
 );
@@ -31,7 +31,7 @@ CREATE TABLE match(
 CREATE TABLE player_match(
 	match_id int,
 	player_id int,
-	role varchar(100),
+	role text,
 	team_id int,
 	PRIMARY KEY (match_id, player_id)
 );
@@ -64,7 +64,7 @@ CREATE TABLE wicket_taken(
 	over_id int,
 	ball_id int,
 	player_out int,
-	kind_out varchar(100),
+	kind_out text,
 	innings_no int,
 	PRIMARY KEY (match_id, over_id, ball_id, innings_no)
 );
@@ -73,7 +73,7 @@ CREATE TABLE extra_runs(
 	match_id int,
 	over_id int,
 	ball_id int,
-	extra_type varchar(100),
+	extra_type text,
 	extra_runs int,
 	innings_no int,
 	PRIMARY KEY (match_id, over_id, ball_id, innings_no)
