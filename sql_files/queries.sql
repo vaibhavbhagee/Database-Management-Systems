@@ -1,3 +1,4 @@
+-- TODO: See if WITH can be used somewhere
 -- Q1
 
 SELECT player_name
@@ -75,14 +76,18 @@ FROM
 WHERE t1.match_id = t.match_id AND t1.maximum_runs = t.total_runs AND t.bowler = player.player_id
 ORDER BY t1.match_id, over_id;
 
--- Q10 <ALSO consider players who have been run out 0 times>
+-- Q10 <DONE: ALSO consider players who have been run out 0 times>
 
-SELECT player_name, number
-FROM player, (SELECT player_out, count(ball_id) AS number
+SELECT player_name,
+CASE WHEN runouts.number IS NULL 
+       THEN 0
+       ELSE runouts.number
+END AS number
+FROM player LEFT OUTER JOIN (SELECT player_out, count(ball_id) AS number
 				FROM wicket_taken
 				GROUP BY player_out, kind_out
 				HAVING kind_out = 'run out') AS runouts
-WHERE player.player_id = runouts.player_out
+ON player.player_id = runouts.player_out
 ORDER BY number DESC, player_name;
 
 -- Q11
@@ -216,23 +221,7 @@ WHERE player.player_id = t3.striker
 ORDER BY average DESC, player_name
 LIMIT 10;
 
--- Q21
-
--- WITHOUT TOP 5 ENTRIES
-SELECT country_name
-FROM
-	(SELECT striker as player_id, round(1.0*runs_scored/num_matches,3) AS average
-	FROM
-		(SELECT striker, sum(runs_scored) AS runs_scored
-		FROM (ball_by_ball NATURAL JOIN batsman_scored) as t
-		GROUP BY striker) AS t1
-		NATURAL JOIN
-		(SELECT player_id as striker, count(role) AS num_matches
-		FROM player_match
-		GROUP by player_id) AS t2) AS t3
-	NATURAL JOIN player
-GROUP BY country_name
-ORDER BY round(AVG(average),3) DESC;
+-- Q21 <NEED TO CHECK WHAT EXACTLY IS REQUIRED>
 
 
 -- WITH TOP 5 ENTRIES
