@@ -1,0 +1,16 @@
+DELETE FROM player;
+DELETE FROM team;
+DELETE FROM match;
+DELETE FROM player_match;
+DELETE FROM ball_by_ball;
+DELETE FROM batsman_scored;
+DELETE FROM wicket_taken;
+DELETE FROM extra_runs;
+DROP TABLE player;
+DROP TABLE team;
+DROP TABLE match;
+DROP TABLE player_match;
+DROP TABLE ball_by_ball;
+DROP TABLE batsman_scored;
+DROP TABLE wicket_taken;
+DROP TABLE extra_runs;
