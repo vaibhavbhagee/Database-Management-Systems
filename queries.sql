@@ -218,6 +218,7 @@ LIMIT 10;
 
 -- Q21
 
+-- WITHOUT TOP 5 ENTRIES
 SELECT country_name
 FROM
 	(SELECT striker as player_id, round(1.0*runs_scored/num_matches,3) AS average
@@ -232,3 +233,38 @@ FROM
 	NATURAL JOIN player
 GROUP BY country_name
 ORDER BY round(AVG(average),3) DESC;
+
+
+-- WITH TOP 5 ENTRIES
+SELECT country_name
+FROM
+	(SELECT country_name, round(AVG(average),3) as average
+	FROM
+		(SELECT striker as player_id, round(1.0*runs_scored/num_matches,3) AS average
+		FROM
+			(SELECT striker, sum(runs_scored) AS runs_scored
+			FROM (ball_by_ball NATURAL JOIN batsman_scored) as t
+			GROUP BY striker) AS t1
+			NATURAL JOIN
+			(SELECT player_id as striker, count(role) AS num_matches
+			FROM player_match
+			GROUP by player_id) AS t2) AS t3
+		NATURAL JOIN player
+	GROUP BY country_name) AS t
+WHERE average IN
+	(SELECT round(AVG(average),3) as average
+	FROM
+		(SELECT striker as player_id, round(1.0*runs_scored/num_matches,3) AS average
+		FROM
+			(SELECT striker, sum(runs_scored) AS runs_scored
+			FROM (ball_by_ball NATURAL JOIN batsman_scored) as t
+			GROUP BY striker) AS t1
+			NATURAL JOIN
+			(SELECT player_id as striker, count(role) AS num_matches
+			FROM player_match
+			GROUP by player_id) AS t2) AS t3
+		NATURAL JOIN player
+	GROUP BY country_name
+	ORDER BY round(AVG(average),3) DESC
+	LIMIT 5)
+ORDER BY average DESC;
