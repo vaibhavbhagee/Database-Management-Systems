@@ -195,3 +195,40 @@ AND (
 	(team_id = team_2 AND team_1 = match_winner)
 	)
 ORDER BY match_id;
+
+-- Q20
+
+SELECT player_name
+FROM
+	(SELECT striker, round(1.0*runs_scored/num_matches,3) AS average
+	FROM
+		(SELECT striker, sum(runs_scored) AS runs_scored
+		FROM (ball_by_ball NATURAL JOIN batsman_scored) as t, match
+		WHERE t.match_id = match.match_id AND season_id = 5
+		GROUP BY striker) AS t1
+		NATURAL JOIN
+		(SELECT player_id as striker, count(role) AS num_matches
+		FROM player_match, match
+		WHERE match.match_id = player_match.match_id AND season_id = 5
+		GROUP by player_id) AS t2) AS t3,
+	player
+WHERE player.player_id = t3.striker
+ORDER BY average DESC, player_name
+LIMIT 10;
+
+-- Q21
+
+SELECT country_name
+FROM
+	(SELECT striker as player_id, round(1.0*runs_scored/num_matches,3) AS average
+	FROM
+		(SELECT striker, sum(runs_scored) AS runs_scored
+		FROM (ball_by_ball NATURAL JOIN batsman_scored) as t
+		GROUP BY striker) AS t1
+		NATURAL JOIN
+		(SELECT player_id as striker, count(role) AS num_matches
+		FROM player_match
+		GROUP by player_id) AS t2) AS t3
+	NATURAL JOIN player
+GROUP BY country_name
+ORDER BY round(AVG(average),3) DESC;
