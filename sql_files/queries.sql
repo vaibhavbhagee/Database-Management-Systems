@@ -17,7 +17,7 @@ ORDER BY player_age DESC, player_name ASC;
 
 -- Q3
 
-SELECT match_id, toss_winner AS match_winner
+SELECT match_id, toss_winner
 FROM match
 WHERE toss_decision = 'bat'
 ORDER BY match_id;
