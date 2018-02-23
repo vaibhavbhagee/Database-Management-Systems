@@ -23,6 +23,7 @@ WHERE toss_decision = 'bat'
 ORDER BY match_id;
 
 -- Q4 <innings_no should also have been asked>
+-- Total runs is normal plus extras, no need to output innings id
 
 SELECT over_id, sum(runs_scored) AS runs_scored
 FROM batsman_scored
@@ -52,14 +53,16 @@ FROM player
 WHERE batting_hand = 'Left-hand bat' AND date_part('year', age('2018-12-02',dob)) < 30
 ORDER BY player_name;
 
--- Q8
+-- Q8 sum of match total and extra runs
 
 SELECT match_id, sum(runs_scored) AS total_runs
 FROM batsman_scored
 GROUP BY match_id
 ORDER BY match_id;
 
--- Q9 <Look at some better way :P>
+-- Q9 <Look at some better way :P> 
+-- order by on over_id
+-- Check about 1 over multiple bowlers and order by over_id if needed
 
 SELECT t1.match_id AS match_id, maximum_runs, player_name
 FROM
@@ -90,14 +93,14 @@ FROM player LEFT OUTER JOIN (SELECT player_out, count(ball_id) AS number
 ON player.player_id = runouts.player_out
 ORDER BY number DESC, player_name;
 
--- Q11
+-- Q11 Check whether 0 needs to be reported or not on PIAZZA
 
 SELECT kind_out AS out_type, count(ball_id) AS number
 FROM wicket_taken
 GROUP BY kind_out
 ORDER BY count(ball_id) DESC, kind_out;
 
--- Q12
+-- Q12 arrange alphabetically by team name
 
 SELECT name, count(man_of_the_match) AS number
 FROM
@@ -117,6 +120,7 @@ ORDER BY count(extra_type) DESC, venue
 LIMIT 1;
 
 -- Q14 <ordering is DESC or ASC>
+-- Decreasing order
 
 SELECT venue
 FROM match
@@ -125,6 +129,7 @@ GROUP BY venue
 ORDER BY count(*), venue;
 
 -- Q15 <CHECK the output>
+-- Add run outs to wickets taken by the bowler and extras as runs given by the bowler
 
 SELECT player_name
 FROM
@@ -143,6 +148,7 @@ ORDER BY average
 LIMIT 1;
 
 -- Q16 ???????????????????????? order by team name?
+-- Order the results in alphabetical order of team names
 
 SELECT player_name, name
 FROM match, player_match, player, team
@@ -201,7 +207,8 @@ AND (
 	)
 ORDER BY match_id;
 
--- Q20
+-- Q20 Denominator should be number of matches in which player batted
+-- Playing as a non striker counts as batting too
 
 SELECT player_name
 FROM
@@ -222,8 +229,8 @@ ORDER BY average DESC, player_name
 LIMIT 10;
 
 -- Q21 <NEED TO CHECK WHAT EXACTLY IS REQUIRED>
-
-
+-- Top 5 distinct values is required
+-- Consider players who haven't played/batted for country average
 -- WITH TOP 5 ENTRIES
 SELECT country_name
 FROM
