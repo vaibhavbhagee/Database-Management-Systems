@@ -1,3 +1,5 @@
+\o '/tmp/output.txt';
+
 -- TODO: See if WITH can be used somewhere
 -- Q1
 
@@ -25,12 +27,32 @@ ORDER BY match_id;
 -- Q4 <innings_no should also have been asked>
 -- Total runs is normal plus extras, no need to output innings id
 
-SELECT over_id, sum(runs_scored) AS runs_scored
+WITH
+t1 AS 
+(SELECT over_id, innings_no, sum(runs_scored) AS runs_scored
 FROM batsman_scored
 WHERE match_id = 335987
-GROUP BY over_id, innings_no
-HAVING sum(runs_scored) <= 7
-ORDER BY sum(runs_scored) DESC, over_id;
+GROUP BY over_id, innings_no),
+t2 AS
+(SELECT over_id, innings_no, sum(extra_runs) AS extra_runs
+FROM extra_runs
+WHERE match_id = 335987
+GROUP BY over_id, innings_no),
+t3 AS
+(SELECT t1.over_id AS over_id, t1.innings_no AS innings_no, runs_scored,
+CASE WHEN t2.extra_runs IS NULL 
+       THEN 0
+    ELSE t2.extra_runs
+END AS extra_runs
+FROM 
+t1 LEFT OUTER JOIN t2
+ON (t1.over_id, t1.innings_no) = (t2.over_id, t2.innings_no)
+ORDER BY innings_no, over_id)
+SELECT over_id, (runs_scored + extra_runs) as runs_scored
+FROM
+t3
+WHERE runs_scored + extra_runs <= 7
+ORDER BY (runs_scored + extra_runs) DESC, over_id;
 
 -- Q5
 
@@ -39,11 +61,11 @@ FROM player, wicket_taken
 WHERE player.player_id = wicket_taken.player_out AND (kind_out = 'bowled') 
 ORDER BY player_name;
 
--- Q6
+-- Q6 TODO: ADD NAMES FOR TEAM 1 AND TEAM 2
 
-SELECT match_id, team_1, team_2, name AS winning_team_name, win_margin
-FROM match, team
-WHERE match.match_winner = team.team_id AND win_type = 'runs' AND win_margin >= 60
+SELECT match_id, t2.name AS team_1, t3.name AS team_2, t1.name AS winning_team_name, win_margin
+FROM match, team AS t1, team AS t2, team AS t3
+WHERE match.match_winner = t1.team_id AND match.team_1 = t2.team_id AND match.team_2 = t3.team_id AND win_type = 'runs' AND win_margin >= 60
 ORDER BY win_margin, match_id;
 
 -- Q7
@@ -55,29 +77,64 @@ ORDER BY player_name;
 
 -- Q8 sum of match total and extra runs
 
-SELECT match_id, sum(runs_scored) AS total_runs
+WITH
+t1 AS 
+(SELECT match_id, sum(runs_scored) AS runs_scored
 FROM batsman_scored
-GROUP BY match_id
+GROUP BY match_id),
+t2 AS
+(SELECT match_id, sum(extra_runs) AS extra_runs
+FROM extra_runs
+GROUP BY match_id),
+t3 AS
+(SELECT t1.match_id AS match_id, runs_scored,
+CASE WHEN t2.extra_runs IS NULL 
+       THEN 0
+    ELSE t2.extra_runs
+END AS extra_runs
+FROM 
+t1 LEFT OUTER JOIN t2
+ON (t1.match_id) = (t2.match_id)
+ORDER BY match_id)
+SELECT match_id, (runs_scored + extra_runs) AS total_runs
+FROM t3
 ORDER BY match_id;
 
 -- Q9 <Look at some better way :P> 
 -- order by on over_id
 -- Check about 1 over multiple bowlers and order by over_id if needed
 
-SELECT t1.match_id AS match_id, maximum_runs, player_name
+WITH
+t1 AS 
+(SELECT match_id, over_id, innings_no, sum(runs_scored) AS runs_scored
+FROM batsman_scored
+GROUP BY match_id, over_id, innings_no),
+t2 AS
+(SELECT match_id, over_id, innings_no, sum(extra_runs) AS extra_runs
+FROM extra_runs
+GROUP BY match_id, over_id, innings_no),
+t3 AS
+(SELECT t1.match_id AS match_id, t1.over_id AS over_id, t1.innings_no AS innings_no, runs_scored,
+CASE WHEN t2.extra_runs IS NULL 
+       THEN 0
+    ELSE t2.extra_runs
+END AS extra_runs
+FROM 
+t1 LEFT OUTER JOIN t2
+ON (t1.match_id, t1.over_id, t1.innings_no) = (t2.match_id, t2.over_id, t2.innings_no)
+ORDER BY match_id, innings_no, over_id),
+t4 AS 
+(SELECT match_id, over_id, innings_no, (runs_scored + extra_runs) AS total_runs, bowler
 FROM
-	(SELECT match_id, MAX(total_runs) AS maximum_runs
-	FROM
-		(SELECT match_id, over_id, innings_no, SUM(runs_scored) AS total_runs
-		FROM batsman_scored
-		GROUP BY match_id, over_id, innings_no) AS t
-	GROUP BY match_id) AS t1, 
-	(SELECT match_id, over_id, innings_no, bowler, SUM(runs_scored) AS total_runs
-		FROM batsman_scored NATURAL JOIN ball_by_ball
-		GROUP BY match_id, over_id, innings_no, bowler) AS t,
-	player
-WHERE t1.match_id = t.match_id AND t1.maximum_runs = t.total_runs AND t.bowler = player.player_id
-ORDER BY t1.match_id, over_id;
+t3 NATURAL JOIN ball_by_ball
+GROUP BY match_id, over_id, innings_no, (runs_scored + extra_runs), bowler)
+SELECT t_1.match_id AS match_id, maximum_runs, player_name
+FROM
+	(SELECT match_id, MAX(runs_scored + extra_runs) AS maximum_runs
+	FROM t3
+	GROUP BY match_id) AS t_1, t4, player
+WHERE t_1.match_id = t4.match_id AND t_1.maximum_runs = t4.total_runs AND t4.bowler = player.player_id
+ORDER BY t_1.match_id, over_id;
 
 -- Q10 <DONE: ALSO consider players who have been run out 0 times>
 
@@ -119,35 +176,55 @@ GROUP BY venue
 ORDER BY count(extra_type) DESC, venue
 LIMIT 1;
 
--- Q14 <ordering is DESC or ASC>
+-- Q14 <ordering is DESC or ASC> CHECK THIS AS WELL
 -- Decreasing order
 
 SELECT venue
 FROM match
 WHERE ((match_winner = toss_winner) AND (toss_decision = 'field')) OR ((match_winner <> toss_winner) AND (toss_decision = 'bat'))
 GROUP BY venue
-ORDER BY count(*), venue;
+ORDER BY count(*) DESC, venue;
 
 -- Q15 <CHECK the output>
 -- Add run outs to wickets taken by the bowler and extras as runs given by the bowler
 
+WITH 
+t_1 AS 
+(SELECT match_id, over_id, innings_no, bowler, sum(runs_scored) AS total_runs_scored
+FROM batsman_scored NATURAL JOIN ball_by_ball
+GROUP BY match_id, over_id, innings_no, bowler),
+t_2 AS 
+(SELECT match_id, over_id, innings_no, bowler, sum(extra_runs) AS extra_runs_scored
+FROM extra_runs NATURAL JOIN ball_by_ball
+GROUP BY match_id, over_id, innings_no, bowler),
+t_3 AS
+(SELECT t_1.match_id AS match_id, t_1.over_id AS over_id, t_1.innings_no AS innings_no, t_1.bowler AS bowler, total_runs_scored,
+CASE WHEN t_2.extra_runs_scored IS NULL 
+       THEN 0
+    ELSE t_2.extra_runs_scored
+END AS extra_runs_scored
+FROM
+t_1 LEFT OUTER JOIN t_2
+ON (t_1.match_id, t_1.over_id, t_1.innings_no, t_1.bowler) = (t_2.match_id, t_2.over_id, t_2.innings_no, t_2.bowler)),
+t_4 AS 
+(SELECT bowler, sum(total_runs_scored+extra_runs_scored) AS runs_given
+FROM
+t_3
+GROUP BY bowler),
+t_5 AS
+(SELECT bowler, count(player_out) AS num_wickets
+FROM ball_by_ball NATURAL JOIN wicket_taken
+GROUP by bowler)
 SELECT player_name
 FROM
-	(SELECT bowler, round(1.0*runs_given/num_wickets,3) AS average
+	(SELECT t_4.bowler AS bowler, player_name, round(1.0*runs_given/num_wickets,3) AS average
 	FROM
-		(SELECT bowler, sum(runs_scored) AS runs_given
-		FROM ball_by_ball NATURAL JOIN batsman_scored
-		GROUP BY bowler) AS t1
-		NATURAL JOIN
-		(SELECT bowler, count(player_out) AS num_wickets
-		FROM ball_by_ball NATURAL JOIN wicket_taken
-		GROUP by bowler) AS t2) AS t3,
-	player
-WHERE player.player_id = t3.bowler 
+		t_4, t_5, player
+	WHERE player.player_id = t_4.bowler AND t_4.bowler = t_5.bowler) AS t1 
 ORDER BY average
 LIMIT 1;
 
--- Q16 ???????????????????????? order by team name?
+-- Q16 ???????????????????????? order by team name? TODO: CHECK ONCE AGAIN
 -- Order the results in alphabetical order of team names
 
 SELECT player_name, name
@@ -158,8 +235,7 @@ WHERE
 	AND match_winner = player_match.team_id 
 	AND player_match.player_id = player.player_id 
 	AND player_match.team_id = team.team_id
-GROUP BY player_name, name
-ORDER BY player_name;
+ORDER BY player_name, name;
 
 -- Q17 <runs scored means total runs or runs in every match>
 
@@ -178,7 +254,7 @@ FROM
 WHERE striker = player_id
 ORDER BY runs_scored DESC, player_name;
 
--- Q18
+-- Q18 CHECK THE SUPER OVER THING
 
 SELECT player_name
 FROM
@@ -209,22 +285,25 @@ ORDER BY match_id;
 
 -- Q20 Denominator should be number of matches in which player batted
 -- Playing as a non striker counts as batting too
-
+WITH
+t1 AS
+(SELECT striker, sum(runs_scored) AS runs_scored
+FROM (ball_by_ball NATURAL JOIN batsman_scored) as t, match
+WHERE t.match_id = match.match_id AND season_id = 5
+GROUP BY striker),
+t2 AS
+(SELECT player_id as striker, ball_by_ball.match_id AS match_id
+FROM ball_by_ball, player, match
+WHERE (player.player_id = ball_by_ball.striker OR player.player_id = ball_by_ball.non_striker) AND match.match_id = ball_by_ball.match_id AND season_id = 5),
+t3 AS
+(SELECT striker, count(DISTINCT match_id) AS num_matches
+FROM t2
+GROUP BY striker)
 SELECT player_name
 FROM
 	(SELECT striker, round(1.0*runs_scored/num_matches,3) AS average
-	FROM
-		(SELECT striker, sum(runs_scored) AS runs_scored
-		FROM (ball_by_ball NATURAL JOIN batsman_scored) as t, match
-		WHERE t.match_id = match.match_id AND season_id = 5
-		GROUP BY striker) AS t1
-		NATURAL JOIN
-		(SELECT player_id as striker, count(role) AS num_matches
-		FROM player_match, match
-		WHERE match.match_id = player_match.match_id AND season_id = 5
-		GROUP by player_id) AS t2) AS t3,
-	player
-WHERE player.player_id = t3.striker
+	FROM t1 NATURAL JOIN t3) AS t4, player
+WHERE player.player_id = t4.striker
 ORDER BY average DESC, player_name
 LIMIT 10;
 
@@ -232,35 +311,43 @@ LIMIT 10;
 -- Top 5 distinct values is required
 -- Consider players who haven't played/batted for country average
 -- WITH TOP 5 ENTRIES
+
+WITH
+t1 AS
+(SELECT striker, sum(runs_scored) AS runs_scored
+FROM (ball_by_ball NATURAL JOIN batsman_scored) as t, match
+WHERE t.match_id = match.match_id
+GROUP BY striker),
+t2 AS
+(SELECT player_id as striker, ball_by_ball.match_id AS match_id
+FROM ball_by_ball, player, match
+WHERE (player.player_id = ball_by_ball.striker OR player.player_id = ball_by_ball.non_striker) AND match.match_id = ball_by_ball.match_id),
+t3 AS
+(SELECT striker, count(DISTINCT match_id) AS num_matches
+FROM t2
+GROUP BY striker),
+t4 AS
+(SELECT striker as player_id, round(1.0*runs_scored/num_matches,3) AS average 
+FROM t1 NATURAL JOIN t3),
+t5 AS 
+(SELECT country_name, sum(average) AS avg_sum
+FROM player NATURAL JOIN t4
+GROUP BY country_name),
+t6 AS
+(SELECT country_name, count(*) AS num_players
+FROM player
+GROUP BY country_name),
+t7 AS
+(SELECT * from t5 NATURAL JOIN t6),
+t8 AS
+(SELECT country_name, round(1.0*avg_sum/num_players,3) AS country_avg
+FROM t7
+ORDER BY country_avg DESC),
+t9 AS
+(SELECT DISTINCT country_avg
+FROM t8
+ORDER BY country_avg DESC
+LIMIT 5)
 SELECT country_name
-FROM
-	(SELECT country_name, round(AVG(average),3) as average
-	FROM
-		(SELECT striker as player_id, round(1.0*runs_scored/num_matches,3) AS average
-		FROM
-			(SELECT striker, sum(runs_scored) AS runs_scored
-			FROM (ball_by_ball NATURAL JOIN batsman_scored) as t
-			GROUP BY striker) AS t1
-			NATURAL JOIN
-			(SELECT player_id as striker, count(role) AS num_matches
-			FROM player_match
-			GROUP by player_id) AS t2) AS t3
-		NATURAL JOIN player
-	GROUP BY country_name) AS t
-WHERE average IN
-	(SELECT round(AVG(average),3) as average
-	FROM
-		(SELECT striker as player_id, round(1.0*runs_scored/num_matches,3) AS average
-		FROM
-			(SELECT striker, sum(runs_scored) AS runs_scored
-			FROM (ball_by_ball NATURAL JOIN batsman_scored) as t
-			GROUP BY striker) AS t1
-			NATURAL JOIN
-			(SELECT player_id as striker, count(role) AS num_matches
-			FROM player_match
-			GROUP by player_id) AS t2) AS t3
-		NATURAL JOIN player
-	GROUP BY country_name
-	ORDER BY round(AVG(average),3) DESC
-	LIMIT 5)
-ORDER BY average DESC;
+FROM t8
+WHERE country_avg IN (SELECT * FROM t9);
