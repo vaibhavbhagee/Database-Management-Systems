@@ -11,7 +11,7 @@ ORDER BY player_name;
 -- Q2
 
 SELECT player_name, player_age
-FROM (	SELECT player_name, date_part('year', age('2018-12-02', dob)) AS player_age
+FROM (	SELECT player_name, date_part('year', age('2018-02-12', dob)) AS player_age
 		FROM player
 		WHERE bowling_skill = 'Legbreak googly') AS p
 WHERE player_age >= 28
@@ -72,7 +72,7 @@ ORDER BY win_margin, match_id;
 
 SELECT player_name
 FROM player
-WHERE batting_hand = 'Left-hand bat' AND date_part('year', age('2018-12-02',dob)) < 30
+WHERE batting_hand = 'Left-hand bat' AND date_part('year', age('2018-02-12',dob)) < 30
 ORDER BY player_name;
 
 -- Q8 sum of match total and extra runs
