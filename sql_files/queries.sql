@@ -1,6 +1,5 @@
 \o '/tmp/output.txt';
 
--- TODO: See if WITH can be used somewhere
 -- Q1
 
 SELECT player_name
@@ -24,8 +23,9 @@ FROM match
 WHERE toss_decision = 'bat'
 ORDER BY match_id;
 
--- Q4 <innings_no should also have been asked>
--- Total runs is normal plus extras, no need to output innings id
+-- Q4
+-- Total runs is normal plus extras
+-- No need to output innings id
 
 WITH
 t1 AS 
@@ -61,7 +61,7 @@ FROM player, wicket_taken
 WHERE player.player_id = wicket_taken.player_out AND (kind_out = 'bowled') 
 ORDER BY player_name;
 
--- Q6 TODO: ADD NAMES FOR TEAM 1 AND TEAM 2
+-- Q6
 
 SELECT match_id, t2.name AS team_1, t3.name AS team_2, t1.name AS winning_team_name, win_margin
 FROM match, team AS t1, team AS t2, team AS t3
@@ -75,7 +75,8 @@ FROM player
 WHERE batting_hand = 'Left-hand bat' AND date_part('year', age('2018-02-12',dob)) < 30
 ORDER BY player_name;
 
--- Q8 sum of match total and extra runs
+-- Q8 
+-- Sum of match total and extra runs
 
 WITH
 t1 AS 
@@ -100,7 +101,7 @@ SELECT match_id, (runs_scored + extra_runs) AS total_runs
 FROM t3
 ORDER BY match_id;
 
--- Q9 <Look at some better way :P> 
+-- Q9
 -- order by on over_id
 -- Check about 1 over multiple bowlers and order by over_id if needed
 
@@ -136,7 +137,7 @@ FROM
 WHERE t_1.match_id = t4.match_id AND t_1.maximum_runs = t4.total_runs AND t4.bowler = player.player_id
 ORDER BY t_1.match_id, over_id;
 
--- Q10 <DONE: ALSO consider players who have been run out 0 times>
+-- Q10
 
 SELECT player_name,
 CASE WHEN runouts.number IS NULL 
@@ -150,14 +151,16 @@ FROM player LEFT OUTER JOIN (SELECT player_out, count(ball_id) AS number
 ON player.player_id = runouts.player_out
 ORDER BY number DESC, player_name;
 
--- Q11 Check whether 0 needs to be reported or not on PIAZZA
+-- Q11 
+-- TODO: Check whether 0 needs to be reported or not on PIAZZA
 
 SELECT kind_out AS out_type, count(ball_id) AS number
 FROM wicket_taken
 GROUP BY kind_out
 ORDER BY count(ball_id) DESC, kind_out;
 
--- Q12 arrange alphabetically by team name
+-- Q12 
+-- arrange alphabetically by team name
 
 SELECT name, count(man_of_the_match) AS number
 FROM
@@ -176,8 +179,8 @@ GROUP BY venue
 ORDER BY count(extra_type) DESC, venue
 LIMIT 1;
 
--- Q14 <ordering is DESC or ASC> CHECK THIS AS WELL
--- Decreasing order
+-- Q14
+-- Decreasing order of count
 
 SELECT venue
 FROM match
@@ -185,7 +188,7 @@ WHERE ((match_winner = toss_winner) AND (toss_decision = 'field')) OR ((match_wi
 GROUP BY venue
 ORDER BY count(*) DESC, venue;
 
--- Q15 <CHECK the output>
+-- Q15
 -- Add run outs to wickets taken by the bowler and extras as runs given by the bowler
 
 WITH 
@@ -224,8 +227,9 @@ FROM
 ORDER BY average
 LIMIT 1;
 
--- Q16 ???????????????????????? order by team name? TODO: CHECK ONCE AGAIN
+-- Q16
 -- Order the results in alphabetical order of team names
+-- Do NOT remove duplicate tuples if any
 
 SELECT player_name, name
 FROM match, player_match, player, team
@@ -237,7 +241,8 @@ WHERE
 	AND player_match.team_id = team.team_id
 ORDER BY player_name, name;
 
--- Q17 <runs scored means total runs or runs in every match>
+-- Q17
+-- Runs scored is total runs scored here
 
 SELECT player_name, runs_scored
 FROM
@@ -254,7 +259,9 @@ FROM
 WHERE striker = player_id
 ORDER BY runs_scored DESC, player_name;
 
--- Q18 CHECK THE SUPER OVER THING
+-- Q18 
+-- 100 should be scored across all innings
+-- Essentially just add runs scored for batsman in a match and see if 100
 
 SELECT player_name
 FROM
@@ -283,8 +290,10 @@ AND (
 	)
 ORDER BY match_id;
 
--- Q20 Denominator should be number of matches in which player batted
+-- Q20 
+-- Denominator should be number of matches in which player batted
 -- Playing as a non striker counts as batting too
+
 WITH
 t1 AS
 (SELECT striker, sum(runs_scored) AS runs_scored
@@ -307,10 +316,9 @@ WHERE player.player_id = t4.striker
 ORDER BY average DESC, player_name
 LIMIT 10;
 
--- Q21 <NEED TO CHECK WHAT EXACTLY IS REQUIRED>
+-- Q21
 -- Top 5 distinct values is required
--- Consider players who haven't played/batted for country average
--- WITH TOP 5 ENTRIES
+-- Consider players who haven't played/batted for country average as well
 
 WITH
 t1 AS
