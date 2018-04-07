@@ -17,6 +17,14 @@ class Dataset():
             for point in points:
                 print(point, file=fout)
 
+    def queryfile(self):
+        points = [' '.join([str(random.random()) for dim in range(self.d)])
+                  for pt in range(self.n)]
+        with open(self.outfile, 'w') as fout:
+            print('{}'.format(self.d), file=fout)
+            for point in points:
+                print(point, file=fout)
+
 if __name__ == '__main__':
     for n in [10, 100, 1000, 10000, 1000000]:
         for d in [2, 3, 5, 10, 15, 20]:
