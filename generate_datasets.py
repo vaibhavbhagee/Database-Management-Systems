@@ -1,8 +1,9 @@
 import random
+import os.path
 
 class Dataset():
-    def __init__(self, n=100, d=20, outfile='datasets/points.txt'):
-        self.outfile = outfile
+    def __init__(self, n=100, d=20, directory='datasets/'):
+        self.outfile = os.path.join(directory, 'dataset.n.{}.d.{}.txt'.format(n, d))
         self.n = n
         self.d = d
         assert 1 <= self.n <= 1000000
@@ -17,5 +18,8 @@ class Dataset():
                 print(point, file=fout)
 
 if __name__ == '__main__':
-    dataset = Dataset(n=10, d=3)
-    dataset.write()
+    for n in [10, 100, 1000, 10000, 1000000]:
+        for d in [2, 3, 5, 10, 15, 20]:
+            dataset = Dataset(n=n, d=d)
+            dataset.write()
+            print(dataset.outfile)
