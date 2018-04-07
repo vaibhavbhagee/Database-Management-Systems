@@ -1,4 +1,7 @@
-#include <bits/stdc++.h>
+#include <fstream>
+#include <iostream>
+#include <queue>
+#include <vector>
 using namespace std;
 
 struct dataset_t {
@@ -19,6 +22,7 @@ void read_dataset(dataset_t &dataset, string filename) {
             fin >> dataset.points[i][j];
         }
     }
+    fin.close();
 }
 
 void print_dataset(const dataset_t &dataset) {
@@ -41,6 +45,22 @@ inline double square_dist(const int d, const vector<double> &pt1, const vector<d
     return answer;
 }
 
+inline void read_query_file(dataset_t &query_data, const string query_file) {
+    ifstream fin(query_file);
+    fin >> query_data.n;
+    query_data.points.clear();
+    const int n = query_data.n;
+    const int d = query_data.d;
+    query_data.points.resize(n, vector<double>(d, 0));
+    cout << "reached here 2  " << endl;
+    for(int i = 0; i < n; ++i) {
+        for(int j = 0; j < d; ++j) {
+            fin >> query_data.points[i][j];
+        }
+    }
+    fin.close();
+}
+
 void sequential_scan(const dataset_t &dataset, const vector<double> &point, const int k) {
     // point: query_point is a double vector of dimension d
     // dataset: the da
@@ -59,7 +79,10 @@ void sequential_scan(const dataset_t &dataset, const vector<double> &point, cons
 }
 
 int main() {
-    dataset_t dataset;
+    dataset_t dataset, queryset;
     read_dataset(dataset, "datasets/points.txt");
     print_dataset(dataset);
+    queryset.d = dataset.d;
+    read_query_file(queryset, "datasets/query2.txt");
+    print_dataset(queryset);
 }
