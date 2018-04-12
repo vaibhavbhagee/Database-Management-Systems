@@ -1,11 +1,13 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <queue>
 #include <vector>
 using namespace std;
 
-struct dataset_t {
-    int n;
+const int LEAF_SIZE = 10;
+
+struct dataset_t { int n;
     int d;
     vector<vector<double>> points;
 };
@@ -30,9 +32,9 @@ void print_dataset(const dataset_t &dataset) {
     const int d = dataset.d;
     for(int i = 0; i < n; ++i) {
         for(int j = 0; j < d; ++j) {
-            cout << dataset.points[i][j] << " ";
+            cerr << dataset.points[i][j] << " ";
         }
-        cout << "\n";
+        cerr << "\n";
     }
 }
 
@@ -93,6 +95,146 @@ inline void print_query_point(const vector<double> query_point) {
     cerr << "\n";
 }
 
+bool compare(const vector<double> &v1, const vector<double> &v2) {
+    const int d = v1.size();
+    for(int i = 0; i < d; ++i) {
+        if(v1[i] < v2[i]) return true;
+        if(v1[i] > v2[i]) return false;
+    }
+    return false;
+}
+
+
+bool intersect(
+        const double r2,
+        const vector<pair<double, double>> &hrect, 
+        const vector<double> &centroid) {
+    const int d = hrect.size();
+    double dist2 = 0.0;
+    for(int idx = 0; idx < d; ++idx) {
+        double diff1 = hrect[idx].first - centroid[idx];
+        double diff2 = centroid[idx] - hrect[idx].second;
+        if(diff1 >= 0) {
+            dist2 += diff1 * diff1;
+        } else if (diff2 >= 0) {
+            dist2 += diff2 * diff2;
+        }
+    }
+    return (dist2 < r2);
+}
+
+struct stacknode_t {
+    vector<vector<double>> points;
+    int depth;
+    int parent;
+    bool leftchild;
+};
+
+struct treenode_t {
+    vector<vector<double>> points;
+    vector<pair<double, double>> left_hrect;
+    vector<pair<double, double>> right_hrect;
+    int leftnode;
+    int rightnode;
+};
+
+void kdtree(vector<treenode_t> &tree, vector<vector<double>> &points) {
+    tree.clear();
+    vector<stacknode_t> stack;
+    const int ndata = points.size();
+    const int ndim = points[0].size();
+    vector<pair<double, double>> hrect(ndim, {0, 1});
+    for(const auto &pt: points) {
+        for(int dim = 0; dim < ndim; ++dim) {
+            hrect[dim].first = min(hrect[dim].first, pt[dim]);
+            hrect[dim].second = max(hrect[dim].second, pt[dim]);
+        }
+    }
+    int sort_dim = 0;
+    sort(points.begin(),
+         points.end(),
+         [sort_dim](const vector<double> &v1, const vector<double> &v2) {
+            return v1[sort_dim] < v2[sort_dim];
+    });
+    const double split_value = points[ndata / 2][sort_dim];
+    
+    vector<pair<double, double>> left_hrect(hrect); 
+    vector<pair<double, double>> right_hrect(hrect);
+    left_hrect[sort_dim].second = split_value;
+    right_hrect[sort_dim].first = split_value;
+
+    vector<vector<double>> left_points, right_points;
+    for(int pt_idx = 0; pt_idx < ndata; ++pt_idx) {
+        if(pt_idx * 2 < ndata) {
+            left_points.push_back(points[pt_idx]);
+        } else {
+            right_points.push_back(points[pt_idx]);
+        }
+    }
+    stack.push_back({left_points, 1, 0, true}); 
+    stack.push_back({right_points, 1, 0, false});
+
+    while(stack.size() > 0) {
+        int nodeptr = tree.size();
+        auto cpoints = stack.back().points;
+        const int depth = stack.back().depth;
+        const int parent = stack.back().parent;
+        const int leftchild = stack.back().leftchild;
+        const int ndata = cpoints.size();
+        stack.pop_back();
+
+        (leftchild ? tree[parent].leftnode : tree[parent].rightnode) = nodeptr;
+
+        if(ndata < LEAF_SIZE) {
+            // if it is a leaf then
+            tree.push_back({
+                cpoints,                            // points
+                vector<pair<double, double>> (),    // lrect is empty
+                vector<pair<double, double>> (),    // rrect is empty
+                -1,                                 // leftnode doesn't exist
+                -1});                               // rightnode doesn't exist
+        } else {
+            const int splitdim = depth % ndim;
+            sort(
+                cpoints.begin(),
+                cpoints.end(), 
+                [splitdim](const vector<double> &v1, const vector<double> &v2) {
+                    return v1[splitdim] < v2[splitdim];
+                }
+            );
+            vector<vector<double>> left_points, right_points;
+            for(int pt_idx = 0; pt_idx < ndata; ++pt_idx) {
+                if(pt_idx * 2 < ndata) {
+                    left_points.push_back(points[pt_idx]);
+                } else {
+                    right_points.push_back(points[pt_idx]);
+                }
+            }
+            stack.push_back({left_points, depth+1, nodeptr, true}); 
+            stack.push_back({right_points, depth+1, nodeptr, false});
+            const double split_value = cpoints[ndata / 2][splitdim];
+            vector<pair<double, double>> left_hrect, right_hrect;
+            if(leftchild) {
+                left_hrect = tree[parent].left_hrect;
+                right_hrect = tree[parent].left_hrect;
+            } else {
+                left_hrect = tree[parent].right_hrect;
+                right_hrect = tree[parent].right_hrect;
+            }
+            left_hrect[splitdim].second = split_value;
+            right_hrect[splitdim].first = split_value;
+            tree.push_back({
+                vector<vector<double>> (),
+                left_hrect,
+                right_hrect,
+                -1,
+                -1
+            });
+        }
+    }
+}
+
+
 int main(int argc, char *argv[]) {
     int k;
     dataset_t dataset;
@@ -102,6 +244,8 @@ int main(int argc, char *argv[]) {
     // read dataset and then flush 0 to STDOUT
     string dataset_file = argv[1];
     read_dataset(dataset, dataset_file);
+    sort(dataset.points.begin(), dataset.points.end(), compare);
+    // print_dataset(dataset);
     cout << 0 << endl;
 
     // read queryfile name and k
