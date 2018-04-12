@@ -205,9 +205,9 @@ void kdtree(vector<treenode_t> &tree, vector<vector<double>> &points) {
             vector<vector<double>> left_points, right_points;
             for(int pt_idx = 0; pt_idx < ndata; ++pt_idx) {
                 if(pt_idx * 2 < ndata) {
-                    left_points.push_back(points[pt_idx]);
+                    left_points.push_back(cpoints[pt_idx]);
                 } else {
-                    right_points.push_back(points[pt_idx]);
+                    right_points.push_back(cpoints[pt_idx]);
                 }
             }
             stack.push_back({left_points, depth+1, nodeptr, true}); 
@@ -245,6 +245,9 @@ int main(int argc, char *argv[]) {
     string dataset_file = argv[1];
     read_dataset(dataset, dataset_file);
     sort(dataset.points.begin(), dataset.points.end(), compare);
+
+    vector<treenode_t> tree;
+    kdtree(tree, dataset.points);
     // print_dataset(dataset);
     cout << 0 << endl;
 
