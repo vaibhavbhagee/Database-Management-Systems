@@ -1,9 +1,7 @@
-# KdTree-StarterCode
+# Assignment 3 - KD Tree Implementation
 
-This repository contains the starter code for the k-d tree assignment in COL362/632 (Intro. to Database Management Systems) being held at IIT Delhi.
+This repository contains the implementation for the kd trees.
 
-The part (d) of the assignment is a competition among all the students based on the time taken by their k-d tree implementation to answer a kNN-query.
- 
 ## Program Structure
 
 The file **parent.py** is provided to you (you are not supposed to edit it). It is the program that will time your submission. You are expected to submit your code along with a **run.sh** which compiles and runs your program (Specifications below).
@@ -51,5 +49,3 @@ Then for k = 2, results.txt should look like:
 
     python parent.py <dataset_file> <query_file> <k>
 parent.py is compatible with Python 2.x and Python 3.x and with both Linux and Windows. However final evaluation will be done using Python 3.x. So, for students using Python in your program, it is recommended to use Python 3.x.
-
-For any issues, feel free to post on the Piazza group of this course.
