@@ -1,4 +1,6 @@
-# Instructions for running the code
+# Assignment 1 - Database Design
+
+* Instructions for running the code
 
 1. To run the tests corresponding to various data loading methods, follow the following steps in order:
 
@@ -32,4 +34,4 @@
 
 1. **NOTE:** The commands should be run from the directory containing the make file
 
-1. **NOTE:** All the parameters are set in the make file and can be edited as per need.
+1. **NOTE:** All the parameters are set in the make file and can be edited as per need
