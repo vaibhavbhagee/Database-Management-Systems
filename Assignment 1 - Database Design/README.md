@@ -1,6 +1,6 @@
 # Assignment 1 - Database Design
 
-* Instructions for running the code
+Instructions for running the code
 
 1. To run the tests corresponding to various data loading methods, follow the following steps in order:
 
